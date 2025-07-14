@@ -1,4 +1,25 @@
 #!/bin/bash
+# if arch
+# if worked in windows use this
+# sed -i 's/\r//' ~/.zshrc
+## install packages
+# sudo pacman -S tmux zsh fontconfig eza fzf ms-edit ripgrep zoxide
+## install starship
+# curl -sS https://starship.rs/install.sh | sh -s -- -y
+## ------- Get needed fonts --------------
+# version=$(curl -s https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest \  | grep tag_name | awk '{gsub(/"/, "", $2); gsub(/,/, "", $2); print $2}')
+# curl -LO https://github.com/ryanoasis/nerd-fonts/releases/download/$version/FiraCode.tar.xz
+# curl -LO https://github.com/ryanoasis/nerd-fonts/releases/download/$version/CascadiaCode.tar.xz
+# curl -LO https://github.com/ryanoasis/nerd-fonts/releases/download/$version/CascadiaMono.tar.xz
+# mkdir -p ~/.fonts
+# tar -xvf FiraCode.tar.xz --directory ~/.fonts 
+# tar -xvf CascadiaCode.tar.xz --directory ~/.fonts 
+# tar -xvf CascadiaMono.tar.xz --directory ~/.fonts 
+# fc-cache -fv
+# rm FiraCode.tar.xz
+# rm CascadiaCode.tar.xz
+# rm CascadiaMono.tar.xz
+## -----------------------------------------
 
 # Install some core packages
 sudo apt install -y tmux zsh fontconfig
@@ -56,7 +77,15 @@ git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh_plugins/zsh-au
 # create .zshrc
 cat > "$HOME/.zshrc" <<'EOF'
 # === .zshrc contents start ===
+export ZSH_PLUGINS=$HOME/.zsh_plugins
+### ---- Load Starship -----------------------------------
+eval "$(starship init zsh)"
+
+### ---- Initialize zoxide -------------------------------
 eval "$(zoxide init zsh)"
+
+### ---- Load fzf completions and keybindings ------------
+source <(fzf --zsh)
 
 ### ---- autocompletions -----------------------------------
 autoload -Uz compinit && compinit
@@ -68,11 +97,6 @@ zstyle ':completion:*' special-dirs true # Complete . and .. special directories
 zstyle ':completion:*' list-colors '' # colorize completion lists
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#) ([0-9a-z-]#)*=01;34=0=01' # colorize kill list
 
-
-### ---- Load Starship -----------------------------------
-eval "$(starship init zsh)"
-
-
 # Aliases
 # ---- switched to abbreviations ------------
 alias grep='rg'
@@ -81,7 +105,7 @@ alias ll="eza --icons --group-directories-first -la"
 
 ### ---- History Configuration -----------------------------------
 HISTSIZE=100000               #How many lines of history to keep in memory
-HISTFILE=$ZSH/.zsh_history     #Where to save history to disk
+HISTFILE=$ZSH_PLUGINS/.zsh_history     #Where to save history to disk
 SAVEHIST=100000               #Number of history entries to save to disk
 setopt appendhistory
 setopt share_history
@@ -89,7 +113,7 @@ setopt hist_ignore_all_dups
 setopt hist_ignore_space #ignores all commands starting with a blank space! Usefull for passwords
 
 ### ---- Source plugins -----------------------------------
-export ZSH_PLUGINS=$HOME/.zsh_plugins
+
 #### ---- fast-syntax-highlighting ------------------------
 [ -f $ZSH_PLUGINS/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh ] && source $ZSH_PLUGINS/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
 
@@ -109,19 +133,14 @@ pastefinish() {
 zstyle :bracketed-paste-magic paste-init pasteinit
 zstyle :bracketed-paste-magic paste-finish pastefinish
 
-#autosuggestion highlighting
+#### autosuggestion highlighting
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=60'
 
 #### ---- zsh-z ------------------------
-eval "$(zoxide init zsh)"
 autoload -U compinit; compinit # source after zsh-z again for autocompletion to work
 
 #### ---- zsh-abbr ------------------------
 [ -f $ZSH_PLUGINS/zsh-abbr/zsh-abbr.zsh ] && source $ZSH_PLUGINS/zsh-abbr/zsh-abbr.zsh
-
-### ---- Load fzf completions and keybindings -----------------------------------
-source <(fzf --zsh)
-# -----------------------------------------------------------------------------------------
 
 ### ----- My personal settings -----------------------------------
 export PATH="$HOME/.local/bin:$PATH"     # for local executables like pip to work properly
@@ -130,8 +149,19 @@ export PATH="$HOME/.local/bin:$PATH"     # for local executables like pip to wor
 export SOPS_AGE_KEY_FILE=$HOME/.sops-age/key.txt
 export SOPS_AGE_RECIPIENTS=$(cat $SOPS_AGE_KEY_FILE |grep -oP "public key: \K(.*)")
 
+### ---- Nvidia CUDA related ----------
+# export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"
+# export CUDA_HOME=/usr/local/cuda
+# export PATH="/usr/local/cuda/bin:$PATH"
+# export XLA_TARGET=cuda120
+# export XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda
+
 # --- for some pasting issur ---- IDK
 precmd () { echo -n "\x1b]1337;CurrentDir=$(pwd)\x07" }
+
+# Arch related
+# export EDITOR=/usr/bin/nvim
+# bindkey "^[[3~" delete-char
 EOF
 echo ".zshrc written to $HOME/.zshrc"
 
@@ -267,11 +297,11 @@ abbr "compress"="tar -czvf"
 abbr "dcd"="docker compose down"
 abbr "dcl"="docker compose logs -f"
 abbr "dcupd"="docker compose up -d"
-abbr "gamc"="git commit -am"
 abbr "gp"="git push"
 abbr "gts"="git status"
 abbr "lab"="jupyter lab --no-browser --ip=0.0.0.0"
 abbr "shut"="sudo shutdown -h now"
+abbr "ff"="fastfetch"
 
 EOF
 echo "zsh-abbr written to $HOME/.config/zsh-abbr/user-abbreviations"
